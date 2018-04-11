@@ -1,42 +1,41 @@
 package com.github.pedrodimoura.firebasecloudmessagingsample.service;
 
-import android.app.Notification;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.github.pedrodimoura.firebasecloudmessagingsample.model.Settings;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
+    public static final String BROADCAST_EVENT = "firebase-custom-intent-broadcast";
+    public static final String BROADCAST_EXTRA = "broadcast-extra";
+    public static final String SYNC_TIME_INTERVAL_KEY = "sync_time_interval";
+    public static final String GPS_TIME_INTERVAL = "gps_time_interval";
+    public static final String GPS_DISTANCE_INTERVAL = "gps_distance_interval";
+
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-
-        Log.d("MyFirebaseMessaging", "onMessageReceived");
-        Log.d("MyFirebaseMessaging", "Message ID: " + remoteMessage.getMessageId());
-        Log.d("MyFirebaseMessaging", "Message From: " + remoteMessage.getFrom());
-
         if (remoteMessage.getNotification() != null) {
+            LocalBroadcastManager localBroadcastManager
+                    = LocalBroadcastManager.getInstance(getApplicationContext());
+
+            Intent intent = new Intent(BROADCAST_EVENT);
+
             RemoteMessage.Notification n = remoteMessage.getNotification();
 
-            NotificationCompat.Builder mBuilder
-                    = new NotificationCompat.Builder(this, "teste")
-                    .setSmallIcon(android.R.drawable.ic_menu_agenda)
-                    .setContentTitle("Teste")
-                    .setContentText(n.getBody())
-                    .setAutoCancel(true)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH);
+            Settings s = new Settings();
 
-            NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getApplicationContext());
-            notificationManagerCompat.notify(1992, mBuilder.build());
+            s.setSyncTimeInterval(remoteMessage.getData().get(SYNC_TIME_INTERVAL_KEY));
+            s.setGpsTimeInterval(remoteMessage.getData().get(GPS_TIME_INTERVAL));
+            s.setGpsDistanceInterval(remoteMessage.getData().get(GPS_DISTANCE_INTERVAL));
 
-            Log.d("MyFirebaseMessaging", "Message Body: " + n.getBody());
-        } else {
-            Log.d("MyFirebaseMessaging", "Message Data: Empty");
+            intent.putExtra(BROADCAST_EXTRA, s);
+
+            localBroadcastManager.sendBroadcast(intent);
         }
     }
 }
